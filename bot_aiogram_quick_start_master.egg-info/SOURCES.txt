@@ -1,0 +1,15 @@
+README.md
+pyproject.toml
+bot/config.py
+bot/db.py
+bot/handlers.py
+bot/keyboards.py
+bot/logger.py
+bot/scheduler.py
+bot/states.py
+bot/services/google_api_service.py
+bot_aiogram_quick_start_master.egg-info/PKG-INFO
+bot_aiogram_quick_start_master.egg-info/SOURCES.txt
+bot_aiogram_quick_start_master.egg-info/dependency_links.txt
+bot_aiogram_quick_start_master.egg-info/requires.txt
+bot_aiogram_quick_start_master.egg-info/top_level.txt

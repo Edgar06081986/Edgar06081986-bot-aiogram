@@ -10,7 +10,11 @@ from bot.keyboards import (
     get_format_keyboard,
     get_paper_type_keyboard,
     get_confirm_keyboard,
-    get_contact_keyboard
+    get_contact_keyboard,
+    get_vizitki_format_keyboard,
+    get_listovki_format_keyboard,
+    get_wide_format_keyboard,
+    get_journals_format_keyboard
 )
 from bot.states import OrderStates
 from bot.logger import log_user_event, LogTypesEnum
@@ -89,7 +93,80 @@ async def info_handler(message: Message):
 @router.message(F.text == "Наши услуги")
 async def services_handler(message: Message):
     # services = await google_api.get_services_list()  # Если реализовано получение из таблицы
-    services = "1. Фото 10x15 — 20₽\n2. Фото 15x21 — 40₽\n3. Фото на документы — 100₽"
+    services = """
+1. Печать визиток 
+Создаем стильные и качественные визитки на мелованной, дизайнерской или плотной бумаге. Доступна полноцветная печать, цифровая,офсет фольгирование. Визитки любой формы, делаем контурную резку и ламинацию. 
+
+2. Печать буклетов  
+Изготовление рекламных буклетов любого формата и формы с фальцовкой (сгибом). Глянцевая или матовая ламинация для защиты и презентабельного вида. 
+
+3. Печать листовок  
+Яркие листовки на любой бумаге (от 130 - 150г). Подходят для промоакций, рекламы и мероприятий. Любой формы и размера.
+
+4. Изготовление брошюр  
+Печать брошюр с мягким переплетом (на скрепке или пружине). Идеально для каталогов, презентаций и инструкций.
+
+5. Печать каталогов и журналов  
+Профессиональная печать многостраничных изданий с обложкой из плотного картона.
+
+6. Создание стильных календарей  
+Перекидные, карманные и настольные календари с индивидуальным дизайном. Печать на мелованной бумаге или плотном картоне.
+
+7. Печать плакатов  
+Яркие постеры форматов А3, А2, А1 и больше. Подходят для интерьера, рекламы и мероприятий.
+
+
+
+8. Печать на самоклеящейся пленке  и бумажной самоклейке
+Наклейки для рекламы, декора, маркировки. Доступны разные виды пленки (матовая, глянцевая, прозрачная) и бумажная самоклейка.
+
+9. Послепечатная обработка  
+- Ламинирование – защита от влаги и повреждений (матовая/глянцевая пленка).
+- Биговка – подготовка сгибов для буклетов и открыток.
+- Фальцовка – аккуратные сгибы многостраничных изделий.
+- Фольгирование – нанесение золотой, серебряной или цветной фольги для премиального вида.
+
+10. Широкоформатная печать  
+Печать чертежей, баннеров, постеров, стендов и интерьерной графики больших форматов.
+
+11. Изготовление виниловых магнитов  
+Яркие магниты на холодильник с вашим дизайном. Глянцевая или матовая поверхность, стойкие краски.
+
+12. Изготовление наклеек и стикерпаков  
+Наклейки разных форм и размеров. Возможна плоттерная резка по контуру для сложных форм.
+
+13. Плоттерная резка  
+Точная вырубка наклеек, трафаретов, элементов декора из пленки, картона, оракала и других материалов.
+
+14. Печать, копирование, сканирование  
+Черно-белая и цветная печать документов, увеличение/уменьшение масштаба, высококачественное сканирование, сканирование архивных документов.
+
+15. Наружная реклама  
+- Печать баннеров, растяжек, вывесок.
+- Изготовление мобильных стендов и табличек.
+- Печать на пленке
+
+16. Фотопечать  
+Печать фото в высоком разрешении на глянцевой, матовой. 
+
+17. Фото на документы  
+Срочное изготовление фото на паспорт, водительские права, визу и другие документы.
+
+18. Брошюровка и твердый переплет  
+- Мягкий переплет (на скобе, пружине или термоклее).
+- Твердый переплет на металлический канал.
+
+19. Изготовление печатей и штампов  
+- Печати для ИП и ООО.
+- Факсимиле.
+- Автоматическая и ручная оснастки.
+
+20. Разработка и корректировка макетов
+-Восстановление фотографий
+- Создание логотипов
+- Корректировка макетов
+- Работа с текстом
+"""
     await message.answer(f"Наши услуги:\n{services}")
 
 # --- Процесс заказа ---
@@ -98,17 +175,65 @@ async def services_handler(message: Message):
 async def start_order(message: Message, state: FSMContext):
     await state.set_state(OrderStates.choosing_format)
     await message.answer(
-        "Выберите формат фотографии:",
+        "Выбор формата:",
         reply_markup=get_format_keyboard()
     )
 
-@router.message(OrderStates.choosing_format, F.text)
-async def choose_format(message: Message, state: FSMContext):
-    format_ = message.text
-    if format_ not in PRICE_LIST:
-        await message.answer("Пожалуйста, выберите формат из списка.", reply_markup=get_format_keyboard())
-        return
-    await state.update_data(format=format_)
+# @router.message(OrderStates.choosing_format, F.text)
+# async def choose_format(message: Message, state: FSMContext):
+#     format_ = message.text
+#     if format_ not in ["Листовки", "Визитки", "Широкоформатная печать", "Журналы,Брошюры"]:
+#         await message.answer("Пожалуйста, выберите формат из списка.", reply_markup=get_format_keyboard())
+#         return
+#     await state.update_data(format=format_)
+#     await state.set_state(OrderStates.choosing_options)
+   
+    
+@router.message(OrderStates.choosing_format, F.text == "Листовки")
+async def choose_listovki(message: Message, state: FSMContext):
+    await message.answer(
+        "Выберите формат листовки:",
+        reply_markup=get_listovki_format_keyboard()
+    )
+
+
+@router.message(OrderStates.choosing_format, F.text == "Визитки")
+async def choose_vizitki(message: Message, state: FSMContext):
+    await message.answer(
+        "Выберите формат визитки:",
+        reply_markup=get_vizitki_format_keyboard()
+    )
+    await message.answer(
+        "5мм безопасного поля с каждой стороны, цветовая палитра CMYK, 300dpi"
+    )
+
+@router.message(OrderStates.choosing_format, F.text == "Широкоформатная печать")
+async def choose_wide_format(message: Message, state: FSMContext):
+    await message.answer(
+        "Выберите формат широкоформатной печати:",
+        reply_markup=get_wide_format_keyboard()
+    )
+    await message.answer(
+        "ℹ️ Нестандартные размеры (по требованию клиента) также доступны. Просто укажите нужный размер в сообщении."
+    )
+    
+
+@router.message(OrderStates.choosing_format, F.text == "Журналы,Брошюры")
+async def choose_journals(message: Message, state: FSMContext):
+    await message.answer(
+        "Выберите формат журнала/брошюры:",
+        reply_markup=get_journals_format_keyboard()
+    )
+
+
+# Обработка выбора формата для всех категорий
+@router.message(OrderStates.choosing_format, F.text.in_([
+    "A7 (105x74)", "A6 (148x105мм)", "A5 (210x148мм)", "A4 (297x210мм)",
+    "90x50 мм", "85x55 мм",
+    "A2 (420x594мм)", "A1 (594x841мм)", "A0 (841x1189мм)",
+]))
+async def choose_any_format(message: Message, state: FSMContext):
+    await state.update_data(format=message.text)
     await state.set_state(OrderStates.choosing_options)
     await message.answer(
         "Выберите тип бумаги:",
