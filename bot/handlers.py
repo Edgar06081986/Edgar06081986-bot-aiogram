@@ -1,9 +1,12 @@
 from aiogram import Router, F
 from aiogram.filters import Command
-from aiogram.types import Message, ReplyKeyboardRemove
+from aiogram.types import Message,FSInputFile, ReplyKeyboardRemove
+
 from aiogram.fsm.context import FSMContext
 from datetime import datetime
+from bot.services.google_drive_service import google_drive
 import os
+from bot.config import Config
 
 from bot.keyboards import (
     get_main_menu_keyboard,
@@ -14,11 +17,36 @@ from bot.keyboards import (
     get_vizitki_format_keyboard,
     get_listovki_format_keyboard,
     get_wide_format_keyboard,
-    get_journals_format_keyboard
+    get_cancel_keyboard,
+    
 )
 from bot.states import OrderStates
 from bot.logger import log_user_event, LogTypesEnum
 from bot.services.google_api_service import google_api
+import os
+from PIL import Image, ImageDraw
+import io
+
+async def save_photo_with_crop_line(message, photo_file_id, order_id):
+    file = await message.bot.get_file(photo_file_id)
+    file_path = file.file_path
+    os.makedirs("images", exist_ok=True)
+    destination = f"images/{order_id}.jpg"
+    buf = io.BytesIO()
+    await message.bot.download_file(file_path, buf)
+    buf.seek(0)
+    image = Image.open(buf).convert("RGB")
+    draw = ImageDraw.Draw(image)
+    width, height = image.size
+    margin = 10
+    line_width = 3
+    draw.rectangle(
+        [margin, margin, width - margin, height - margin],
+        outline="red",
+        width=line_width
+    )
+    image.save(destination, "JPEG")
+    return destination
 
 router = Router()
 
@@ -192,6 +220,13 @@ async def start_order(message: Message, state: FSMContext):
 @router.message(OrderStates.choosing_format, F.text == "Листовки")
 async def choose_listovki(message: Message, state: FSMContext):
     await message.answer(
+        """
+        Цветовая палитра CMYK,300dpi
+        Бумага (130-150г.)
+        """
+        )
+    
+    await message.answer(
         "Выберите формат листовки:",
         reply_markup=get_listovki_format_keyboard()
     )
@@ -200,37 +235,40 @@ async def choose_listovki(message: Message, state: FSMContext):
 @router.message(OrderStates.choosing_format, F.text == "Визитки")
 async def choose_vizitki(message: Message, state: FSMContext):
     await message.answer(
+        "5мм безопасного поля с каждой стороны, цветовая палитра CMYK, 300dpi"
+    )
+    await message.answer(
         "Выберите формат визитки:",
         reply_markup=get_vizitki_format_keyboard()
     )
-    await message.answer(
-        "5мм безопасного поля с каждой стороны, цветовая палитра CMYK, 300dpi"
-    )
+    
 
 @router.message(OrderStates.choosing_format, F.text == "Широкоформатная печать")
 async def choose_wide_format(message: Message, state: FSMContext):
+    
+    await message.answer(
+        "ℹ️ Нестандартные размеры (по требованию клиента)"
+    )
     await message.answer(
         "Выберите формат широкоформатной печати:",
         reply_markup=get_wide_format_keyboard()
     )
-    await message.answer(
-        "ℹ️ Нестандартные размеры (по требованию клиента) также доступны. Просто укажите нужный размер в сообщении."
-    )
-    
 
 @router.message(OrderStates.choosing_format, F.text == "Журналы,Брошюры")
 async def choose_journals(message: Message, state: FSMContext):
+    await state.update_data(format="Журналы,Брошюры")
+    await state.set_state(OrderStates.choosing_options)
     await message.answer(
-        "Выберите формат журнала/брошюры:",
-        reply_markup=get_journals_format_keyboard()
+        "Выберите тип бумаги для журналов или брошюр:",
+        reply_markup=get_paper_type_keyboard()
     )
 
 
 # Обработка выбора формата для всех категорий
 @router.message(OrderStates.choosing_format, F.text.in_([
-    "A7 (105x74)", "A6 (148x105мм)", "A5 (210x148мм)", "A4 (297x210мм)",
-    "90x50 мм", "85x55 мм",
-    "A2 (420x594мм)", "A1 (594x841мм)", "A0 (841x1189мм)",
+    "A7 (109х78 мм)", "A6 (152х109 мм)", "A5 (214х148 мм)", "A4 (301х214 мм)",
+    "Стандартные визитки (94x54 мм)", "Евровизитки (89x59 мм)",
+    "A2 (420x594 мм)", "A1 (594x841 мм)", "A0 (841x1189 мм)",
 ]))
 async def choose_any_format(message: Message, state: FSMContext):
     await state.update_data(format=message.text)
@@ -240,34 +278,32 @@ async def choose_any_format(message: Message, state: FSMContext):
         reply_markup=get_paper_type_keyboard()
     )
 
-@router.message(OrderStates.choosing_options, F.text)
-async def choose_options(message: Message, state: FSMContext):
-    option = message.text
-    if option not in ["Глянцевая", "Матовая", "Без разницы"]:
-        await message.answer("Пожалуйста, выберите тип бумаги из списка.", reply_markup=get_paper_type_keyboard())
-        return
-    await state.update_data(option=option)
+
+@router.message(OrderStates.choosing_options, F.text.in_(["Глянцевая", "Матовая", "Без разницы"]))
+async def choose_paper_type(message: Message, state: FSMContext):
+    await state.update_data(option=message.text)
     await state.set_state(OrderStates.uploading_image)
     await message.answer(
-        "Пожалуйста, отправьте фотографию (JPG/PNG, до 20 МБ):",
-        reply_markup=ReplyKeyboardRemove()
+        "Пожалуйста, отправьте изображение для печати.",
+        reply_markup=get_cancel_keyboard()
     )
+
+
 
 @router.message(OrderStates.uploading_image, F.photo)
 async def upload_image(message: Message, state: FSMContext):
     photo = message.photo[-1]
-    if photo.file_size > 20 * 1024 * 1024:
-        await message.answer("Файл слишком большой. Максимальный размер — 20 МБ.")
-        return
     await state.update_data(photo_file_id=photo.file_id)
     await state.set_state(OrderStates.preview_and_confirm)
     data = await state.get_data()
     price = calculate_price(data.get("format"), data.get("option"))
+    order_id = generate_order_id(message.from_user.id)
+    processed_path = await save_photo_with_crop_line(message, photo.file_id, order_id)
     await message.answer_photo(
-        photo.file_id,
-        caption=f"Вот предпросмотр вашего фото.\nСтоимость: {price}₽\n\nПодтвердите заказ?",
-        reply_markup=get_confirm_keyboard()
-    )
+    FSInputFile(processed_path),
+    caption=f"Вот предпросмотр вашего фото с линией обрезки.\nСтоимость: {price}₽\n\nПодтвердите заказ?",
+    reply_markup=get_confirm_keyboard()
+)
 
 @router.message(OrderStates.preview_and_confirm, F.text == "✅ Подтвердить")
 async def confirm_order(message: Message, state: FSMContext):
@@ -293,12 +329,23 @@ async def receive_contact(message: Message, state: FSMContext):
     order_id = generate_order_id(message.from_user.id)
     price = calculate_price(data.get("format"), data.get("option"))
     date = datetime.now().strftime("%d.%m.%Y %H:%M")
+     # Ссылка на фото в Google Drive
 
-    # Сохраняем фото
-    await save_photo(message, data["photo_file_id"], order_id)
+    # Сохраняем фото локально
+    local_path = await save_photo(message, data["photo_file_id"], order_id)
+    
+    # Загружаем фото на Google Drive
+    image_link = google_drive.upload_file(
+        file_path=local_path,
+        file_name=f"{order_id}.jpg",
+        folder_id=Config.GOOGLE_FOLDER_IMAGES_ID
+    )
+
+    # Удаляем локальный файл
+    os.remove(local_path)
 
     # Сохраняем заказ в Google Sheets
-    values = [[order_id, contact, data.get("format"), price, date]]
+    values = [[order_id, contact, data.get("format"), price, date,image_link]]
     await google_api.append_sheet_data("Заказы", values)
 
     await state.clear()

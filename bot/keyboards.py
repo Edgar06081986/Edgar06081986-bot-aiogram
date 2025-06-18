@@ -19,13 +19,25 @@ def get_format_keyboard():
 
 def get_listovki_format_keyboard():
     buttons = [
-        [KeyboardButton(text="A7 (109х78)")],
-        [KeyboardButton(text="A6 (152х109)")],
-        [KeyboardButton(text="A5 (214х148)")],
-        [KeyboardButton(text="A4 (301х214)")],
+        [KeyboardButton(text="A7 (109х78 мм)")],
+        [KeyboardButton(text="A6 (152х109 мм)")],
+        [KeyboardButton(text="A5 (214х148 мм)")],
+        [KeyboardButton(text="A4 (301х214 мм)")],
         [KeyboardButton(text="❌ Отмена")]
     ]
     return ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
+
+
+
+def get_wide_format_keyboard():
+    buttons = [
+        [KeyboardButton(text="A2 (420x594 мм)")],
+        [KeyboardButton(text="A1 (594x841 мм)")],
+        [KeyboardButton(text="A0 (841x1189 мм)")],
+        [KeyboardButton(text="❌ Отмена")]
+    ]
+    return ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
+
 
 def get_vizitki_format_keyboard():
     buttons = [
@@ -35,20 +47,6 @@ def get_vizitki_format_keyboard():
     ]
     return ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
 
-def get_wide_format_keyboard():
-    buttons = [
-        [KeyboardButton(text="A2 (420x594мм)")],
-        [KeyboardButton(text="A1 (594x841мм)")],
-        [KeyboardButton(text="A0 (841x1189мм)")],
-        [KeyboardButton(text="❌ Отмена")]
-    ]
-    return ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
-
-def get_journals_format_keyboard():
-    buttons = [
-        [KeyboardButton(text="❌ Отмена")]
-    ]
-    return ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
 
 def get_paper_type_keyboard():
     buttons = [

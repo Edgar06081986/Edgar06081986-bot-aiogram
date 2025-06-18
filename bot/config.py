@@ -21,3 +21,4 @@ class Config:
     GOOGLE_CREDENTIALS_PATH = os.getenv('GOOGLE_CREDENTIALS_PATH', './google-credentials.json')
     GOOGLE_SHEETS_FILE_ID = os.getenv('GOOGLE_SHEETS_FILE_ID', 'ваш_ID_таблицы')
     GOOGLE_SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
+    GOOGLE_FOLDER_IMAGES_ID = os.getenv('GOOGLE_FOLDER_IMAGES_ID', 'ваш_ID_папки_с_изображениями')

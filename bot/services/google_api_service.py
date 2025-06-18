@@ -24,7 +24,7 @@ class GoogleAPIService:
         try:
             self.sheet.values().append(
                 spreadsheetId=Config.GOOGLE_SHEETS_FILE_ID,
-                range=f"{sheet_name}!A1",
+                range=sheet_name,
                 valueInputOption="USER_ENTERED",
                 body={"values": values}
             ).execute()
