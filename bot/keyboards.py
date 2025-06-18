@@ -19,10 +19,35 @@ def get_format_keyboard():
 
 def get_listovki_format_keyboard():
     buttons = [
-        [KeyboardButton(text="A7 (109х78 мм)")],
-        [KeyboardButton(text="A6 (152х109 мм)")],
-        [KeyboardButton(text="A5 (214х148 мм)")],
-        [KeyboardButton(text="A4 (301х214 мм)")],
+        [KeyboardButton(text="A7 (105х74 мм)")],
+        [KeyboardButton(text="A6 (148х105 мм)")],
+        [KeyboardButton(text="A5 (210х148 мм)")],
+        [KeyboardButton(text="A4 (297х210 мм)")],
+        [KeyboardButton(text="❌ Отмена")]
+    ]
+    return ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
+
+# def get_listovki_out_format_keyboard():
+#     buttons = [
+#         [KeyboardButton(text="A7 (109х78 мм)")],
+#         [KeyboardButton(text="A6 (152х109 мм)")],
+#         [KeyboardButton(text="A5 (214х148 мм)")],
+#         [KeyboardButton(text="A4 (301х214 мм)")],
+#         [KeyboardButton(text="❌ Отмена")]
+#     ]
+#     return ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
+
+def get_tirazh_keyboard():
+    buttons = [
+        [KeyboardButton(text="50"), KeyboardButton(text="100"), KeyboardButton(text="200")],
+        [KeyboardButton(text="300"), KeyboardButton(text="400"), KeyboardButton(text="500")],
+        [KeyboardButton(text="❌ Отмена")]
+    ]
+    return ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
+
+def get_side_keyboard():
+    buttons = [
+        [KeyboardButton(text="Односторонняя"), KeyboardButton(text="Двусторонняя")],
         [KeyboardButton(text="❌ Отмена")]
     ]
     return ReplyKeyboardMarkup(keyboard=buttons, resize_keyboard=True)
