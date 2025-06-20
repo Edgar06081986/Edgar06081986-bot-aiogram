@@ -9,5 +9,6 @@ logs
 .idea
 *.pyc
 .vscode
-.images
+ images
+/images
 

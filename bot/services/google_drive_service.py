@@ -36,6 +36,7 @@ class GoogleDriveService:
         # Получаем публичную ссылку
         file_id = file.get('id')
         public_url = f"https://drive.google.com/uc?id={file_id}"
+        
         return public_url
 
 google_drive = GoogleDriveService()
